@@ -27,6 +27,7 @@ func StudentById(c *gin.Context) {
 	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
+		return
 	}
 	c.JSON(http.StatusOK, student)
 }
@@ -71,5 +72,23 @@ func EditStudent(c *gin.Context) {
 	}
 
 	database.DB.Model(&student).Updates(student)
+	c.JSON(http.StatusOK, student)
+}
+
+func StudentByCpf(c *gin.Context) {
+	var student models.Student
+	cpf := c.Param("cpf")
+
+	err := database.DB.Where(&models.Student{CPF: cpf}).First(&student).Error
+	if err == gorm.ErrRecordNotFound {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Student not found",
+		})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
 	c.JSON(http.StatusOK, student)
 }
