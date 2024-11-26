@@ -18,6 +18,7 @@ func AllStudents(c *gin.Context) {
 func StudentById(c *gin.Context) {
 	var student models.Student
 	id := c.Params.ByName("id")
+
 	err := database.DB.First(&student, id).Error
 	if err == gorm.ErrRecordNotFound {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -25,10 +26,12 @@ func StudentById(c *gin.Context) {
 		})
 		return
 	}
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, student)
 }
 
@@ -41,12 +44,21 @@ func Greeting(c *gin.Context) {
 
 func CreateStudent(c *gin.Context) {
 	var student models.Student
+
 	if err := c.ShouldBindJSON(&student); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
+	if err := models.ValidateStudent(&student); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	database.DB.Create(&student)
 	c.JSON(http.StatusOK, student)
 }
@@ -71,6 +83,13 @@ func EditStudent(c *gin.Context) {
 		return
 	}
 
+	if err := models.ValidateStudent(&student); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	database.DB.Model(&student).Updates(student)
 	c.JSON(http.StatusOK, student)
 }
@@ -86,9 +105,11 @@ func StudentByCpf(c *gin.Context) {
 		})
 		return
 	}
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, student)
 }
